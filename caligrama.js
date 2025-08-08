@@ -1,3 +1,4 @@
+
 document.getElementById('crear').addEventListener('click', () => {
   const texto = document.getElementById('poema').value;
   const palabras = texto.split(/\s+/);
@@ -29,20 +30,49 @@ document.getElementById('crear').addEventListener('click', () => {
       span.style.transform = `rotate(${rotacion}deg)`;
     });
 
-    contenedor.onmousedown = function(e) {
+    // Soporte para arrastrar con mouse (PC)
+    contenedor.addEventListener('mousedown', function(e) {
       if (e.target === rotarBtn) return;
+      e.preventDefault();
       const offsetX = e.offsetX;
       const offsetY = e.offsetY;
 
-      document.onmousemove = function(ev) {
+      function onMouseMove(ev) {
         contenedor.style.left = (ev.pageX - lienzo.offsetLeft - offsetX) + 'px';
         contenedor.style.top = (ev.pageY - lienzo.offsetTop - offsetY) + 'px';
-      };
-      document.onmouseup = function() {
-        document.onmousemove = null;
-        document.onmouseup = null;
-      };
-    };
+      }
+
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      }
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+
+    // Soporte para arrastrar con touch (móvil)
+    contenedor.addEventListener('touchstart', function(e) {
+      if (e.target === rotarBtn) return;
+      const touch = e.touches[0];
+      const rect = contenedor.getBoundingClientRect();
+      const offsetX = touch.clientX - rect.left;
+      const offsetY = touch.clientY - rect.top;
+
+      function onTouchMove(ev) {
+        const moveTouch = ev.touches[0];
+        contenedor.style.left = (moveTouch.clientX - lienzo.offsetLeft - offsetX) + 'px';
+        contenedor.style.top = (moveTouch.clientY - lienzo.offsetTop - offsetY) + 'px';
+      }
+
+      function onTouchEnd() {
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+      }
+
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', onTouchEnd);
+    });
 
     lienzo.appendChild(contenedor);
   });
